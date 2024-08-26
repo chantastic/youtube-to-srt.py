@@ -1,15 +1,13 @@
+import argparse
 from youtube_transcript_api import YouTubeTranscriptApi
 import re
+import sys
 
 def get_video_id(url):
-    # Extract video ID from YouTube URL
     video_id_match = re.search(r"(?:v=|\/)([0-9A-Za-z_-]{11}).*", url)
-    if video_id_match:
-        return video_id_match.group(1)
-    return None
+    return video_id_match.group(1) if video_id_match else None
 
 def format_time(seconds):
-    # Convert seconds to SRT time format
     hours, remainder = divmod(seconds, 3600)
     minutes, seconds = divmod(remainder, 60)
     milliseconds = int((seconds % 1) * 1000)
@@ -33,12 +31,24 @@ def youtube_to_srt(url):
 
     return srt_content
 
-# Example usage
-if __name__ == "__main__":
-    url = input("Enter YouTube URL: ")
-    srt_transcript = youtube_to_srt(url)
-    print(srt_transcript)
+def main():
+    parser = argparse.ArgumentParser(description="Convert YouTube video subtitles to SRT format.")
+    parser.add_argument("url", help="YouTube video URL")
+    parser.add_argument("-o", "--output", help="Output file name (default: transcript.srt)")
+    args = parser.parse_args()
+
+    print("Fetching transcript...")
+    srt_transcript = youtube_to_srt(args.url)
     
-    # Optionally, save to file
-    with open("transcript.srt", "w", encoding="utf-8") as f:
+    if srt_transcript.startswith("Error") or srt_transcript == "Invalid YouTube URL":
+        print(srt_transcript)
+        sys.exit(1)
+
+    output_file = args.output or "transcript.srt"
+    with open(output_file, "w", encoding="utf-8") as f:
         f.write(srt_transcript)
+    
+    print(f"Transcript saved to {output_file}")
+
+if __name__ == "__main__":
+    main()
